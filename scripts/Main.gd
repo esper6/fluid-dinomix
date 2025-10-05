@@ -13,6 +13,11 @@ func _ready():
 	print("Fluid Dinomix - Main scene loaded")
 	print("Scene tree: ", get_tree().current_scene.name)
 	
+	# Hide the game UI initially
+	if has_node("UI"):
+		ui = get_node("UI")
+		ui.visible = false
+	
 	# Check if we should show title screen first
 	if should_show_title_screen():
 		show_title_screen()
@@ -32,6 +37,11 @@ func _on_title_play_pressed(title_screen):
 	# Remove title screen and start game
 	title_screen.queue_free()
 	set_meta("game_started", true)
+	
+	# Show the game UI
+	if ui:
+		ui.visible = true
+	
 	setup_game()
 
 func create_title_screen_ui() -> Control:
@@ -147,6 +157,8 @@ func setup_game():
 		
 	if has_node("UI"):
 		ui = get_node("UI")
+		# Make sure UI is visible during gameplay
+		ui.visible = true
 	else:
 		print("UI node does not exist!")
 	
@@ -167,15 +179,16 @@ func setup_game():
 		fluid_system.name = "FluidSystem"
 		add_child(fluid_system)
 		
-	# Create UI programmatically
-	if ui != null:
-		create_game_ui()
-	
-	# Initialize building system
+	# Initialize building system FIRST
 	print("Creating building system...")
 	building_system = BuildingSystem.new()
 	game_area.add_child(building_system)
 	print("Building system added to GameArea")
+	
+	# THEN connect UI to building system
+	if ui != null:
+		# UI.tscn is now loaded, connect it to building system
+		setup_ui_connections()
 	
 	# Initialize level manager
 	print("Creating level manager...")
@@ -289,59 +302,31 @@ func show_completion_message():
 	dialog.confirmed.connect(_return_to_menu)
 
 func _return_to_menu():
+	# Hide the game UI before returning to menu
+	if ui:
+		ui.visible = false
 	SceneManager.go_to_title()
 
-func create_game_ui():
-	print("Creating game UI programmatically...")
+func setup_ui_connections():
+	print("Setting up UI connections...")
+	print("Building system exists: ", building_system != null)
 	
-	# Create the main UI control
-	var game_ui = Control.new()
-	game_ui.name = "GameUI"
-	game_ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ui.add_child(game_ui)
+	# The UI.tscn is now loaded as GameUI under the CanvasLayer
+	var ui_control = ui.get_node_or_null("GameUI")
+	if ui_control:
+		print("Found UI control: ", ui_control.name)
+		if ui_control.has_method("set_building_system"):
+			# If UI has a method to set building system, use it
+			ui_control.set_building_system(building_system)
+			print("Called set_building_system method")
+		else:
+			# Otherwise set it directly
+			ui_control.building_system = building_system
+			print("Set building_system directly")
+	else:
+		print("UI control not found!")
 	
-	# Create building palette
-	var building_palette = VBoxContainer.new()
-	building_palette.name = "BuildingPalette"
-	building_palette.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
-	building_palette.position = Vector2(-120, -150)
-	building_palette.size = Vector2(100, 300)
-	game_ui.add_child(building_palette)
-	
-	# Add palette label
-	var palette_label = Label.new()
-	palette_label.text = "Building Blocks:"
-	palette_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	building_palette.add_child(palette_label)
-	
-	# Create building buttons
-	var button_configs = [
-		{"name": "SolidButton", "text": "Solid Block", "type": BuildingBlock.BlockType.SOLID},
-		{"name": "RampRightButton", "text": "Ramp Right", "type": BuildingBlock.BlockType.RAMP_RIGHT},
-		{"name": "RampLeftButton", "text": "Ramp Left", "type": BuildingBlock.BlockType.RAMP_LEFT},
-		{"name": "PipeHButton", "text": "Pipe H", "type": BuildingBlock.BlockType.PIPE_HORIZONTAL},
-		{"name": "PipeVButton", "text": "Pipe V", "type": BuildingBlock.BlockType.PIPE_VERTICAL}
-	]
-	
-	for config in button_configs:
-		var button = Button.new()
-		button.name = config.name
-		button.text = config.text
-		button.custom_minimum_size = Vector2(80, 30)
-		button.pressed.connect(_on_building_button_pressed.bind(config.type))
-		building_palette.add_child(button)
-	
-	# Create instructions
-	var instructions = Label.new()
-	instructions.name = "Instructions"
-	instructions.text = "Left Click: Place Block\nRight Click: Remove Block\nGoal: Get fluid from source to target!"
-	instructions.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	instructions.position = Vector2(10, -80)
-	instructions.size = Vector2(400, 60)
-	instructions.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	game_ui.add_child(instructions)
-	
-	print("Game UI created successfully")
+	print("UI connections setup complete")
 
 func _on_building_button_pressed(block_type: BuildingBlock.BlockType):
 	if building_system:
