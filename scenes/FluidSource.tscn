@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://cqm8j5k2n7b8p"]
+
+[ext_resource type="Script" path="res://scripts/FluidSource.gd" id="1_2j9xk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(32, 32)
+
+[node name="FluidSource" type="Area2D"]
+script = ExtResource("1_2j9xk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.2, 0.6, 1, 1)
+
+[node name="SpawnTimer" type="Timer" parent="."]
+wait_time = 0.1
+autostart = true
+
+[connection signal="timeout" from="SpawnTimer" to="_on_spawn_timer_timeout"]

@@ -1,0 +1,70 @@
+[gd_scene load_steps=2 format=3 uid="uid://fac13ns5yvh0"]
+
+[ext_resource type="Script" uid="uid://ddh6w0b3v805s" path="res://scripts/UI.gd" id="1_6p9xr"]
+
+[node name="UI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6p9xr")
+
+[node name="BuildingPalette" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -150.0
+offset_right = -20.0
+offset_bottom = 150.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="BuildingPalette"]
+layout_mode = 2
+text = "Building Blocks:"
+horizontal_alignment = 1
+
+[node name="SolidButton" type="Button" parent="BuildingPalette"]
+layout_mode = 2
+text = "Solid Block"
+
+[node name="RampRightButton" type="Button" parent="BuildingPalette"]
+layout_mode = 2
+text = "Ramp Right"
+
+[node name="RampLeftButton" type="Button" parent="BuildingPalette"]
+layout_mode = 2
+text = "Ramp Left"
+
+[node name="PipeHButton" type="Button" parent="BuildingPalette"]
+layout_mode = 2
+text = "Pipe H"
+
+[node name="PipeVButton" type="Button" parent="BuildingPalette"]
+layout_mode = 2
+text = "Pipe V"
+
+[node name="Instructions" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_right = 400.0
+grow_vertical = 0
+text = "Left Click: Place Block
+Right Click: Remove Block
+Goal: Get fluid from source to target!"
+vertical_alignment = 2
+
+[connection signal="pressed" from="BuildingPalette/SolidButton" to="." method="_on_solid_button_pressed"]
+[connection signal="pressed" from="BuildingPalette/RampRightButton" to="." method="_on_ramp_right_button_pressed"]
+[connection signal="pressed" from="BuildingPalette/RampLeftButton" to="." method="_on_ramp_left_button_pressed"]
+[connection signal="pressed" from="BuildingPalette/PipeHButton" to="." method="_on_pipe_h_button_pressed"]
+[connection signal="pressed" from="BuildingPalette/PipeVButton" to="." method="_on_pipe_v_button_pressed"]

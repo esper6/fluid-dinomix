@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://c8m6n4lap1q7r"]
+
+[ext_resource type="Script" uid="uid://cogy8svuo4on0" path="res://scripts/BuildingBlock.gd" id="1_5n8xp"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_4y82y"]
+
+[node name="BuildingBlock" type="StaticBody2D"]
+script = ExtResource("1_5n8xp")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(61, -8)
+sprite_frames = SubResource("SpriteFrames_4y82y")
