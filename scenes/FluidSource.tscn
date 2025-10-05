@@ -18,4 +18,4 @@ modulate = Color(0.2, 0.6, 1, 1)
 wait_time = 0.1
 autostart = true
 
-[connection signal="timeout" from="SpawnTimer" to="_on_spawn_timer_timeout"]
+[connection signal="timeout" from="SpawnTimer" to="." method="_on_spawn_timer_timeout"]
