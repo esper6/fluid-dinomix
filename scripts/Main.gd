@@ -199,35 +199,69 @@ func setup_game():
 	
 	# Fluid system script is already attached in the scene
 	
-	# Create a simple test level
-	print("Creating test level...")
-	create_test_level()
+	# Load and setup the current level
+	print("Loading level...")
+	load_current_level()
 	print("Game setup complete!")
 
-func create_test_level():
-	print("Creating test level programmatically...")
+func load_current_level():
+	# Load Level 1 scene
+	var level_scene = load("res://scenes/Level1.tscn")
+	if level_scene == null:
+		print("Failed to load Level1.tscn - falling back to simple test level")
+		create_simple_test_level()
+		return
 	
-	# Create fluid source programmatically
+	# Instance the level
+	var current_level = level_scene.instantiate()
+	add_child(current_level)
+	
+	# Setup the level with our systems
+	current_level.setup_level(building_system, fluid_system, level_manager)
+	
+	# Create source and goal based on level data
+	create_level_source_and_goal(current_level)
+	
+	print("Level loaded successfully: ", current_level.level_name)
+
+func create_level_source_and_goal(level: Level):
+	# Create fluid source at level-specified position
 	print("Creating FluidSource...")
 	var source = create_fluid_source()
 	game_area.add_child(source)
-	source.global_position = Vector2(100, 100)
+	source.global_position = level.get_source_position()
 	source.fluid_spawned.connect(_on_fluid_spawned)
 	fluid_sources.append(source)
 	print("FluidSource created at position: ", source.global_position)
 	
-	# Create fluid goal programmatically
+	# Create fluid goal at level-specified position
 	print("Creating FluidGoal...")
 	var goal = create_fluid_goal()
 	game_area.add_child(goal)
-	goal.global_position = Vector2(400, 300)
+	goal.global_position = level.get_goal_position()
 	fluid_goals.append(goal)
 	print("FluidGoal created at position: ", goal.global_position)
 	
 	# Setup level manager
 	print("Setting up level manager with ", fluid_sources.size(), " sources and ", fluid_goals.size(), " goals")
 	level_manager.setup_level(fluid_sources, fluid_goals)
-	print("Test level created successfully!")
+
+func create_simple_test_level():
+	# Fallback simple level if Level1.tscn fails to load
+	print("Creating simple test level...")
+	
+	var source = create_fluid_source()
+	game_area.add_child(source)
+	source.global_position = Vector2(100, 100)
+	source.fluid_spawned.connect(_on_fluid_spawned)
+	fluid_sources.append(source)
+	
+	var goal = create_fluid_goal()
+	game_area.add_child(goal)
+	goal.global_position = Vector2(400, 300)
+	fluid_goals.append(goal)
+	
+	level_manager.setup_level(fluid_sources, fluid_goals)
 
 func create_fluid_source() -> FluidSource:
 	var source = FluidSource.new()
@@ -239,14 +273,36 @@ func create_fluid_source() -> FluidSource:
 	collision.shape = shape
 	source.add_child(collision)
 	
-	# Add sprite
+	# Add sprite - load external faucet sprite from assets folder
 	var sprite = Sprite2D.new()
-	sprite.modulate = Color(0.2, 0.6, 1, 1)
-	# Create a simple texture
-	var texture = ImageTexture.new()
-	var image = Image.create(32, 32, false, Image.FORMAT_RGB8)
-	image.fill(Color.CYAN)
-	texture.set_image(image)
+	sprite.modulate = Color.WHITE
+	
+	# Try to load external faucet sprite from organized folder structure
+	var texture = load("res://assets/sprites/faucet.png")
+	if texture == null:
+		# Simple fallback - just a blue square with indicator
+		texture = ImageTexture.new()
+		var image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
+		image.fill(Color(0.3, 0.6, 1.0, 1.0))  # Blue background
+		
+		# Add simple text indicator (very basic)
+		for x in range(8, 24):
+			for y in range(14, 18):
+				image.set_pixel(x, y, Color.WHITE)  # White text area
+		
+		texture.set_image(image)
+		print("Using fallback faucet sprite - place faucet.png in assets/sprites/ folder to use custom sprite")
+	else:
+		print("Using custom faucet sprite from assets/sprites/faucet.png")
+		
+		# Auto-scale sprite to fit nicely in 32x32 area
+		var texture_size = texture.get_size()
+		var target_size = 32.0
+		var scale_factor = target_size / max(texture_size.x, texture_size.y)
+		sprite.scale = Vector2(scale_factor, scale_factor)
+		
+		print("Sprite size: ", texture_size, " - Auto-scaled by: ", scale_factor)
+	
 	sprite.texture = texture
 	source.add_child(sprite)
 	

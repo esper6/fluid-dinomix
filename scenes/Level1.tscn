@@ -1,0 +1,197 @@
+[gd_scene load_steps=2 format=3 uid="uid://526qnxvpr8m0"]
+
+[ext_resource type="Script" uid="uid://cb7q02h051yei" path="res://scripts/Level.gd" id="1_level"]
+
+[node name="Level1" type="Node2D"]
+script = ExtResource("1_level")
+level_name = "Level 1: First Steps"
+level_description = "Learn to guide water from source to goal using building blocks."
+source_position = Vector2(96, 64)
+goal_position = Vector2(512, 384)
+
+[node name="LevelGeometry" type="Node2D" parent="."]
+
+[node name="Platforms" type="Node2D" parent="LevelGeometry"]
+
+[node name="Platform1" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 48.0
+offset_top = 400.0
+offset_right = 80.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform2" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 80.0
+offset_top = 400.0
+offset_right = 112.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform3" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 112.0
+offset_top = 400.0
+offset_right = 144.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform4" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 144.0
+offset_top = 400.0
+offset_right = 176.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform5" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 208.0
+offset_top = 400.0
+offset_right = 240.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform6" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 240.0
+offset_top = 400.0
+offset_right = 272.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform7" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 272.0
+offset_top = 400.0
+offset_right = 304.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform8" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 336.0
+offset_top = 400.0
+offset_right = 368.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform9" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 368.0
+offset_top = 400.0
+offset_right = 400.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform10" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 400.0
+offset_top = 400.0
+offset_right = 432.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform11" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 464.0
+offset_top = 400.0
+offset_right = 496.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform12" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 496.0
+offset_top = 400.0
+offset_right = 528.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Platform13" type="ColorRect" parent="LevelGeometry/Platforms"]
+offset_left = 528.0
+offset_top = 400.0
+offset_right = 560.0
+offset_bottom = 432.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Obstacles" type="Node2D" parent="LevelGeometry"]
+
+[node name="Wall1" type="ColorRect" parent="LevelGeometry/Obstacles"]
+offset_left = 176.0
+offset_top = 304.0
+offset_right = 208.0
+offset_bottom = 336.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Wall2" type="ColorRect" parent="LevelGeometry/Obstacles"]
+offset_left = 176.0
+offset_top = 272.0
+offset_right = 208.0
+offset_bottom = 304.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Wall3" type="ColorRect" parent="LevelGeometry/Obstacles"]
+offset_left = 176.0
+offset_top = 240.0
+offset_right = 208.0
+offset_bottom = 272.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Wall4" type="ColorRect" parent="LevelGeometry/Obstacles"]
+offset_left = 304.0
+offset_top = 336.0
+offset_right = 336.0
+offset_bottom = 368.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Wall5" type="ColorRect" parent="LevelGeometry/Obstacles"]
+offset_left = 304.0
+offset_top = 304.0
+offset_right = 336.0
+offset_bottom = 336.0
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Ramps" type="Node2D" parent="LevelGeometry"]
+
+[node name="RampRight" type="ColorRect" parent="LevelGeometry/Ramps"]
+offset_left = 144.0
+offset_top = 368.0
+offset_right = 176.0
+offset_bottom = 400.0
+color = Color(0.6, 0.4, 0.2, 1)
+
+[node name="RampLeft" type="ColorRect" parent="LevelGeometry/Ramps"]
+offset_left = 400.0
+offset_top = 368.0
+offset_right = 432.0
+offset_bottom = 400.0
+color = Color(0.6, 0.4, 0.2, 1)
+
+[node name="Pipes" type="Node2D" parent="LevelGeometry"]
+
+[node name="PipeH" type="ColorRect" parent="LevelGeometry/Pipes"]
+offset_left = 272.0
+offset_top = 336.0
+offset_right = 304.0
+offset_bottom = 368.0
+color = Color(0.3, 0.3, 0.3, 1)
+
+[node name="Markers" type="Node2D" parent="."]
+
+[node name="SourceMarker" type="ColorRect" parent="Markers"]
+offset_left = 80.0
+offset_top = 48.0
+offset_right = 112.0
+offset_bottom = 80.0
+color = Color(0, 1, 1, 1)
+
+[node name="SourceLabel" type="Label" parent="Markers"]
+offset_left = 80.0
+offset_top = 24.0
+offset_right = 120.0
+offset_bottom = 47.0
+text = "SOURCE"
+
+[node name="GoalMarker" type="ColorRect" parent="Markers"]
+offset_left = 488.0
+offset_top = 360.0
+offset_right = 536.0
+offset_bottom = 408.0
+color = Color(1, 0.5, 0, 1)
+
+[node name="GoalLabel" type="Label" parent="Markers"]
+offset_left = 496.0
+offset_top = 336.0
+offset_right = 536.0
+offset_bottom = 359.0
+text = "GOAL"

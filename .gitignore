@@ -1,3 +1,21 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Context and documentation files (not part of the game)
+PROJECT_CONTEXT.md
+how you how to set up external sprite workflow
+
+# Development/debugging files
+*.tmp
+*.log
+debug.txt
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor-specific files
+*.swp
+*.swo
+*~
