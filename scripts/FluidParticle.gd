@@ -8,7 +8,7 @@ var cohesion_radius: float = 20.0
 var cohesion_strength: float = 0.3
 var visual_radius: float = 15.0
 var split_threshold: float = 80.0
-var gravity_strength: float = 200.0
+var gravity_strength: float = 80.0  # Reduced for slower falling
 var surface_tension: float = 0.1
 
 # Nearby particle tracking

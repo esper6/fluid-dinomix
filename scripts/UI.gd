@@ -3,6 +3,8 @@ class_name GameUI
 
 var building_system: BuildingSystem
 var current_selected_button: Button
+var fluid_source: FluidSource
+var is_flow_active: bool = false
 
 func _ready():
 	# Get reference to building system - use call_deferred to ensure Main is ready
@@ -38,16 +40,38 @@ func _connect_to_building_system():
 			else:
 				print("UI: GameArea not found")
 	
+	# Also try to find the fluid source
+	call_deferred("_connect_to_fluid_source")
+	
 	print("UI: Final building_system reference: ", building_system)
 
 func set_building_system(bs: BuildingSystem):
 	building_system = bs
 	print("UI building system set directly")
 
+func _connect_to_fluid_source():
+	print("UI: Looking for fluid source...")
+	# Try to find the fluid source in the GameArea
+	var game_area = get_node_or_null("/root/Main/GameArea")
+	if game_area:
+		for child in game_area.get_children():
+			if child is FluidSource:
+				fluid_source = child
+				print("UI: Found fluid source: ", fluid_source.name)
+				break
+	
+	if not fluid_source:
+		print("UI: No fluid source found yet")
+
 func _set_default_selection():
 	var solid_button = get_node_or_null("BuildingPalette/SolidButton")
 	if solid_button:
 		update_button_selection(solid_button)
+	
+	# Set initial Start button appearance
+	var start_button = get_node_or_null("FlowControl/StartStopButton")
+	if start_button:
+		start_button.modulate = Color(0.6, 1.0, 0.6, 1.0)  # Greenish tint to indicate "ready to start"
 
 func _on_solid_button_pressed():
 	print("UI: Solid button pressed!")
@@ -123,3 +147,28 @@ func update_button_selection(selected_button: Button):
 		current_selected_button.add_theme_color_override("font_color", Color.YELLOW)
 	else:
 		print("UI: No button to highlight!")
+
+func _on_start_stop_button_pressed():
+	print("UI: Start/Stop button pressed!")
+	
+	# Find the fluid source if we don't have it yet
+	if not fluid_source:
+		_connect_to_fluid_source()
+	
+	if fluid_source:
+		is_flow_active = not is_flow_active
+		fluid_source.set_active(is_flow_active)
+		
+		# Update button text
+		var button = get_node_or_null("FlowControl/StartStopButton")
+		if button:
+			if is_flow_active:
+				button.text = "STOP FLOW"
+				button.modulate = Color(1.0, 0.6, 0.6, 1.0)  # Reddish tint
+			else:
+				button.text = "START FLOW"
+				button.modulate = Color(0.6, 1.0, 0.6, 1.0)  # Greenish tint
+		
+		print("UI: Flow is now ", "ACTIVE" if is_flow_active else "STOPPED")
+	else:
+		print("UI: No fluid source found to control!")

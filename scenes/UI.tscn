@@ -63,8 +63,24 @@ Right Click: Remove Block
 Goal: Get fluid from source to target!"
 vertical_alignment = 2
 
+[node name="FlowControl" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 80.0
+grow_horizontal = 0
+
+[node name="StartStopButton" type="Button" parent="FlowControl"]
+layout_mode = 2
+text = "START FLOW"
+
 [connection signal="pressed" from="BuildingPalette/SolidButton" to="." method="_on_solid_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/RampRightButton" to="." method="_on_ramp_right_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/RampLeftButton" to="." method="_on_ramp_left_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/PipeHButton" to="." method="_on_pipe_h_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/PipeVButton" to="." method="_on_pipe_v_button_pressed"]
+[connection signal="pressed" from="FlowControl/StartStopButton" to="." method="_on_start_stop_button_pressed"]

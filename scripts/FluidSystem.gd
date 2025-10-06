@@ -29,7 +29,7 @@ func spawn_fluid_particle(pos: Vector2):
 
 func create_fluid_particle() -> FluidParticle:
 	var particle = FluidParticle.new()
-	particle.gravity_scale = 2.0
+	particle.gravity_scale = 0.8
 	particle.contact_monitor = true
 	particle.max_contacts_reported = 10
 	

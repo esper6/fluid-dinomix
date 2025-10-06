@@ -2,7 +2,7 @@ extends Area2D
 class_name FluidSource
 
 @export var flow_rate: float = 1.0
-@export var is_active: bool = true
+@export var is_active: bool = false  # Start inactive - wait for player to press Start
 
 var spawn_timer: Timer
 
@@ -16,6 +16,8 @@ func _ready():
 		print("ERROR: SpawnTimer not found in FluidSource!")
 	else:
 		print("FluidSource spawn timer found")
+		# Start with timer paused since we're inactive by default
+		spawn_timer.paused = not is_active
 
 func _on_spawn_timer_timeout():
 	if is_active:
