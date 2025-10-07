@@ -58,8 +58,8 @@ anchor_bottom = 1.0
 offset_top = -60.0
 offset_right = 400.0
 grow_vertical = 0
-text = "Left Click: Place Block
-Right Click: Remove Block
+text = "BLOCK MODE: Left Click: Place Block, Right Click: Remove Block
+DRAW MODE: Hold Left Click: Draw Line, Right Click: Erase Line
 Goal: Get fluid from source to target!"
 vertical_alignment = 2
 
@@ -71,12 +71,40 @@ anchor_right = 1.0
 offset_left = -120.0
 offset_top = 20.0
 offset_right = -20.0
-offset_bottom = 80.0
+offset_bottom = 120.0
 grow_horizontal = 0
 
 [node name="StartStopButton" type="Button" parent="FlowControl"]
 layout_mode = 2
 text = "START FLOW"
+
+[node name="ModeToggleButton" type="Button" parent="FlowControl"]
+layout_mode = 2
+text = "DRAW MODE"
+
+[node name="MarbleCounter" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="CounterLabel" type="Label" parent="MarbleCounter"]
+layout_mode = 2
+text = "Marbles Collected:"
+horizontal_alignment = 1
+
+[node name="CountDisplay" type="Label" parent="MarbleCounter"]
+layout_mode = 2
+text = "0 / 10"
+horizontal_alignment = 1
 
 [connection signal="pressed" from="BuildingPalette/SolidButton" to="." method="_on_solid_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/RampRightButton" to="." method="_on_ramp_right_button_pressed"]
@@ -84,3 +112,4 @@ text = "START FLOW"
 [connection signal="pressed" from="BuildingPalette/PipeHButton" to="." method="_on_pipe_h_button_pressed"]
 [connection signal="pressed" from="BuildingPalette/PipeVButton" to="." method="_on_pipe_v_button_pressed"]
 [connection signal="pressed" from="FlowControl/StartStopButton" to="." method="_on_start_stop_button_pressed"]
+[connection signal="pressed" from="FlowControl/ModeToggleButton" to="." method="_on_mode_toggle_button_pressed"]

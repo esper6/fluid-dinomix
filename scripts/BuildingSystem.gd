@@ -6,6 +6,14 @@ var building_block_scene: PackedScene
 var placed_blocks: Dictionary = {}
 var current_block_type: BuildingBlock.BlockType = BuildingBlock.BlockType.SOLID
 
+# Drawing mode variables
+var is_draw_mode: bool = false
+var is_drawing: bool = false
+var current_drawing_line: Line2D
+var current_drawing_body: StaticBody2D
+var draw_points: PackedVector2Array = []
+var draw_thickness: float = 16.0
+
 signal block_placed(position: Vector2, block_type: BuildingBlock.BlockType)
 signal block_removed(position: Vector2)
 
@@ -20,14 +28,39 @@ func _input(event):
 		var ui_node = get_node_or_null("/root/Main/UI/GameUI")
 		if ui_node and _is_mouse_over_ui(ui_node, event.position):
 			return
-			
-		var grid_pos = world_to_grid(get_global_mouse_position())
 		
+		if is_draw_mode:
+			print("Routing input to draw mode: ", event.button_index, " pressed: ", event.pressed)
+			handle_draw_input(event)
+		else:
+			handle_block_input(event)
+	
+	elif event is InputEventMouseMotion and is_draw_mode and is_drawing:
+		handle_draw_motion(event)
+
+func handle_block_input(event: InputEventMouseButton):
+	var grid_pos = world_to_grid(get_global_mouse_position())
+	
+	if event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			place_block(grid_pos)
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			remove_block(grid_pos)
+
+func handle_draw_input(event: InputEventMouseButton):
+	if event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			if event.button_index == MOUSE_BUTTON_LEFT:
-				place_block(grid_pos)
-			elif event.button_index == MOUSE_BUTTON_RIGHT:
-				remove_block(grid_pos)
+			start_drawing(get_global_mouse_position())
+		else:
+			finish_drawing()
+	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		# Right click to erase drawn lines
+		print("Right-click in draw mode at: ", get_global_mouse_position())
+		erase_drawn_line_at_position(get_global_mouse_position())
+
+func handle_draw_motion(_event: InputEventMouseMotion):
+	if is_drawing and current_drawing_line:
+		add_point_to_current_drawing(get_global_mouse_position())
 
 func _is_mouse_over_ui(ui_node: Control, mouse_pos: Vector2) -> bool:
 	# Check if mouse is over any UI element
@@ -237,3 +270,149 @@ func remove_block(grid_pos: Vector2i):
 func set_current_block_type(type: BuildingBlock.BlockType):
 	current_block_type = type
 	print("Building system: Block type changed to ", type)
+
+func set_draw_mode(draw_mode: bool):
+	is_draw_mode = draw_mode
+	print("Building system: Draw mode ", "enabled" if draw_mode else "disabled")
+	
+	# If switching away from draw mode, finish any current drawing
+	if not draw_mode and is_drawing:
+		finish_drawing()
+
+# Drawing mode functions
+func start_drawing(start_pos: Vector2):
+	print("Starting drawing at: ", start_pos)
+	is_drawing = true
+	draw_points.clear()
+	draw_points.append(start_pos)
+	
+	# Create visual line
+	current_drawing_line = Line2D.new()
+	current_drawing_line.width = draw_thickness
+	current_drawing_line.default_color = Color.BROWN
+	current_drawing_line.joint_mode = Line2D.LINE_JOINT_ROUND
+	current_drawing_line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	current_drawing_line.end_cap_mode = Line2D.LINE_CAP_ROUND
+	current_drawing_line.add_point(start_pos)
+	add_child(current_drawing_line)
+	
+	# Create physics body for collision
+	current_drawing_body = StaticBody2D.new()
+	add_child(current_drawing_body)
+
+func add_point_to_current_drawing(pos: Vector2):
+	if not is_drawing or not current_drawing_line:
+		return
+	
+	# Only add point if it's far enough from the last point (smooth drawing)
+	var last_point = draw_points[-1]
+	if pos.distance_to(last_point) > 8.0:  # Minimum distance between points
+		draw_points.append(pos)
+		current_drawing_line.add_point(pos)
+		
+		# Add collision segment for the new line segment
+		add_collision_segment(last_point, pos)
+
+func add_collision_segment(from: Vector2, to: Vector2):
+	if not current_drawing_body:
+		return
+	
+	# Create collision shape for this line segment
+	var collision = CollisionShape2D.new()
+	var shape = RectangleShape2D.new()
+	
+	# Calculate segment properties
+	var segment_length = from.distance_to(to)
+	var segment_center = (from + to) / 2.0
+	var segment_angle = from.angle_to_point(to)
+	
+	# Set up collision shape
+	shape.size = Vector2(segment_length, draw_thickness)
+	collision.shape = shape
+	collision.position = segment_center
+	collision.rotation = segment_angle
+	
+	current_drawing_body.add_child(collision)
+
+func finish_drawing():
+	if not is_drawing:
+		return
+	
+	print("Finishing drawing with ", draw_points.size(), " points")
+	is_drawing = false
+	
+	# Finalize the drawing
+	if current_drawing_line and draw_points.size() >= 2:
+		# Keep the line and collision body
+		current_drawing_line = null
+		current_drawing_body = null
+	else:
+		# Remove incomplete drawing
+		if current_drawing_line:
+			current_drawing_line.queue_free()
+			current_drawing_line = null
+		if current_drawing_body:
+			current_drawing_body.queue_free()
+			current_drawing_body = null
+	
+	draw_points.clear()
+
+func erase_drawn_line_at_position(pos: Vector2):
+	print("Looking for drawn lines to erase at position: ", pos)
+	var erase_radius = draw_thickness * 2  # Larger detection radius
+	var lines_to_remove = []
+	var bodies_to_remove = []
+	
+	# Find all Line2D nodes and their corresponding StaticBody2D collision bodies
+	for child in get_children():
+		if child is Line2D:
+			# Check if click is near any point on the line
+			var line_node = child as Line2D
+			var should_remove = false
+			
+			for point in line_node.points:
+				if pos.distance_to(point) < erase_radius:
+					should_remove = true
+					break
+			
+			# Also check if click is near any line segment
+			if not should_remove and line_node.points.size() >= 2:
+				for i in range(line_node.points.size() - 1):
+					var point_a = line_node.points[i]
+					var point_b = line_node.points[i + 1]
+					var closest_point = Geometry2D.get_closest_point_to_segment(pos, point_a, point_b)
+					if pos.distance_to(closest_point) < erase_radius:
+						should_remove = true
+						break
+			
+			if should_remove:
+				lines_to_remove.append(line_node)
+				print("Found line to remove with ", line_node.points.size(), " points")
+	
+	# Find corresponding StaticBody2D collision bodies to remove
+	for child in get_children():
+		if child is StaticBody2D:
+			# Check if this StaticBody2D has collision shapes near the click position
+			var body_node = child as StaticBody2D
+			var should_remove = false
+			
+			for collision_child in body_node.get_children():
+				if collision_child is CollisionShape2D:
+					var collision_pos = body_node.global_position + collision_child.position
+					if pos.distance_to(collision_pos) < erase_radius * 2:  # Larger radius for collision bodies
+						should_remove = true
+						break
+			
+			if should_remove:
+				bodies_to_remove.append(body_node)
+	
+	# Remove all found lines and bodies
+	for line in lines_to_remove:
+		line.queue_free()
+	for body in bodies_to_remove:
+		body.queue_free()
+	
+	if lines_to_remove.size() > 0:
+		print("Erased ", lines_to_remove.size(), " drawn lines and ", bodies_to_remove.size(), " collision bodies at: ", pos)
+	else:
+		print("No drawn lines found near position: ", pos)

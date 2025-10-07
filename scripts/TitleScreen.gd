@@ -6,7 +6,8 @@ func _ready():
 
 func _on_play_button_pressed():
 	print("Play button pressed")
-	# The connection will be handled by Main.gd
+	# Go to the main game scene
+	SceneManager.go_to_game()
 
 func _on_settings_button_pressed():
 	print("Settings button pressed")

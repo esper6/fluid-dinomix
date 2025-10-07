@@ -106,56 +106,7 @@ color = Color(0.5, 0.5, 0.5, 1)
 
 [node name="Obstacles" type="Node2D" parent="LevelGeometry"]
 
-[node name="Wall1" type="ColorRect" parent="LevelGeometry/Obstacles"]
-offset_left = 176.0
-offset_top = 304.0
-offset_right = 208.0
-offset_bottom = 336.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Wall2" type="ColorRect" parent="LevelGeometry/Obstacles"]
-offset_left = 176.0
-offset_top = 272.0
-offset_right = 208.0
-offset_bottom = 304.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Wall3" type="ColorRect" parent="LevelGeometry/Obstacles"]
-offset_left = 176.0
-offset_top = 240.0
-offset_right = 208.0
-offset_bottom = 272.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Wall4" type="ColorRect" parent="LevelGeometry/Obstacles"]
-offset_left = 304.0
-offset_top = 336.0
-offset_right = 336.0
-offset_bottom = 368.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Wall5" type="ColorRect" parent="LevelGeometry/Obstacles"]
-offset_left = 304.0
-offset_top = 304.0
-offset_right = 336.0
-offset_bottom = 336.0
-color = Color(0.5, 0.5, 0.5, 1)
-
 [node name="Ramps" type="Node2D" parent="LevelGeometry"]
-
-[node name="RampRight" type="ColorRect" parent="LevelGeometry/Ramps"]
-offset_left = 144.0
-offset_top = 368.0
-offset_right = 176.0
-offset_bottom = 400.0
-color = Color(0.6, 0.4, 0.2, 1)
-
-[node name="RampLeft" type="ColorRect" parent="LevelGeometry/Ramps"]
-offset_left = 400.0
-offset_top = 368.0
-offset_right = 432.0
-offset_bottom = 400.0
-color = Color(0.6, 0.4, 0.2, 1)
 
 [node name="Pipes" type="Node2D" parent="LevelGeometry"]
 

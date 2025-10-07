@@ -4,7 +4,9 @@ class_name GameUI
 var building_system: BuildingSystem
 var current_selected_button: Button
 var fluid_source: FluidSource
+var fluid_goal: FluidGoal
 var is_flow_active: bool = false
+var is_draw_mode: bool = false
 
 func _ready():
 	# Get reference to building system - use call_deferred to ensure Main is ready
@@ -40,8 +42,9 @@ func _connect_to_building_system():
 			else:
 				print("UI: GameArea not found")
 	
-	# Also try to find the fluid source
+	# Also try to find the fluid source and goal
 	call_deferred("_connect_to_fluid_source")
+	call_deferred("_connect_to_fluid_goal")
 	
 	print("UI: Final building_system reference: ", building_system)
 
@@ -63,6 +66,50 @@ func _connect_to_fluid_source():
 	if not fluid_source:
 		print("UI: No fluid source found yet")
 
+func _connect_to_fluid_goal():
+	print("UI: Looking for fluid goal...")
+	# Try to find the fluid goal in the GameArea
+	var game_area = get_node_or_null("/root/Main/GameArea")
+	if game_area:
+		for child in game_area.get_children():
+			if child is FluidGoal:
+				fluid_goal = child
+				print("UI: Found fluid goal: ", fluid_goal.name)
+				# Connect to marble collection signal
+				fluid_goal.marble_collected.connect(_on_marble_collected)
+				fluid_goal.goal_completed.connect(_on_goal_completed)
+				# Initialize counter display
+				update_marble_counter(0, fluid_goal.fluid_required)
+				break
+	
+	if not fluid_goal:
+		print("UI: No fluid goal found yet")
+
+func _on_marble_collected(count: int):
+	print("UI: Marble collected, count: ", count)
+	if fluid_goal:
+		update_marble_counter(count, fluid_goal.fluid_required)
+
+func _on_goal_completed():
+	print("UI: Goal completed!")
+	# You could add celebration effects here
+	var count_display = get_node_or_null("MarbleCounter/CountDisplay")
+	if count_display:
+		count_display.modulate = Color.GREEN
+		count_display.text += " - COMPLETE!"
+
+func update_marble_counter(collected: int, required: int):
+	var count_display = get_node_or_null("MarbleCounter/CountDisplay")
+	if count_display:
+		count_display.text = str(collected) + " / " + str(required)
+		# Color coding: red if none, yellow if some, green if complete
+		if collected == 0:
+			count_display.modulate = Color.WHITE
+		elif collected >= required:
+			count_display.modulate = Color.GREEN
+		else:
+			count_display.modulate = Color.YELLOW
+
 func _set_default_selection():
 	var solid_button = get_node_or_null("BuildingPalette/SolidButton")
 	if solid_button:
@@ -72,6 +119,11 @@ func _set_default_selection():
 	var start_button = get_node_or_null("FlowControl/StartStopButton")
 	if start_button:
 		start_button.modulate = Color(0.6, 1.0, 0.6, 1.0)  # Greenish tint to indicate "ready to start"
+	
+	# Set initial Mode button appearance
+	var mode_button = get_node_or_null("FlowControl/ModeToggleButton")
+	if mode_button:
+		mode_button.modulate = Color(0.8, 0.8, 1.0, 1.0)  # Bluish tint for draw mode
 
 func _on_solid_button_pressed():
 	print("UI: Solid button pressed!")
@@ -172,3 +224,29 @@ func _on_start_stop_button_pressed():
 		print("UI: Flow is now ", "ACTIVE" if is_flow_active else "STOPPED")
 	else:
 		print("UI: No fluid source found to control!")
+
+func _on_mode_toggle_button_pressed():
+	print("UI: Mode toggle button pressed!")
+	
+	is_draw_mode = not is_draw_mode
+	
+	# Update building system mode
+	if building_system:
+		building_system.set_draw_mode(is_draw_mode)
+	
+	# Update button appearance and text
+	var button = get_node_or_null("FlowControl/ModeToggleButton")
+	if button:
+		if is_draw_mode:
+			button.text = "BLOCK MODE"
+			button.modulate = Color(1.0, 0.8, 0.6, 1.0)  # Orange tint for block mode
+		else:
+			button.text = "DRAW MODE"
+			button.modulate = Color(0.8, 0.8, 1.0, 1.0)  # Blue tint for draw mode
+	
+	# Update building palette visibility
+	var palette = get_node_or_null("BuildingPalette")
+	if palette:
+		palette.visible = not is_draw_mode  # Hide block palette in draw mode
+	
+	print("UI: Mode is now ", "DRAW" if is_draw_mode else "BLOCK")

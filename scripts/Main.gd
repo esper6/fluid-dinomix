@@ -11,130 +11,22 @@ var fluid_goals: Array[FluidGoal] = []
 
 func _ready():
 	print("Fluid Dinomix - Main scene loaded")
-	print("Scene tree: ", get_tree().current_scene.name)
+	var current_scene = get_tree().current_scene
+	if current_scene != null:
+		print("Scene tree: ", current_scene.name)
+	else:
+		print("Scene tree: [null current_scene]")
 	
-	# Hide the game UI initially
+	# Show the game UI when Main.tscn loads
 	if has_node("UI"):
 		ui = get_node("UI")
-		ui.visible = false
+		if ui != null:
+			ui.visible = true
 	
-	# Check if we should show title screen first
-	if should_show_title_screen():
-		show_title_screen()
-	else:
-		setup_game()
-
-func should_show_title_screen() -> bool:
-	# Show title screen if this is the first load
-	return not has_meta("game_started")
-
-func show_title_screen():
-	# Create title screen programmatically to avoid loading issues
-	var title_screen = create_title_screen_ui()
-	add_child(title_screen)
-
-func _on_title_play_pressed(title_screen):
-	# Remove title screen and start game
-	title_screen.queue_free()
-	set_meta("game_started", true)
-	
-	# Show the game UI
-	if ui:
-		ui.visible = true
-	
+	# Always start the game directly when Main.tscn is loaded
+	# (TitleScreen.tscn will load this scene when Play is pressed)
 	setup_game()
 
-func create_title_screen_ui() -> Control:
-	# Create title screen entirely in code
-	var title_screen = Control.new()
-	title_screen.name = "TitleScreen"
-	title_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	# Background
-	var background = ColorRect.new()
-	background.color = Color(0.1, 0.15, 0.3, 1)
-	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	title_screen.add_child(background)
-	
-	# Center container
-	var center_container = CenterContainer.new()
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	title_screen.add_child(center_container)
-	
-	# Main layout
-	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(300, 400)
-	center_container.add_child(vbox)
-	
-	# Title
-	var title_label = Label.new()
-	title_label.text = "FLUID DINOMIX"
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 48)
-	title_label.add_theme_color_override("font_color", Color(0.3, 0.7, 1, 1))
-	vbox.add_child(title_label)
-	
-	# Subtitle
-	var subtitle_label = Label.new()
-	subtitle_label.text = "A Fluid Physics Puzzle Game"
-	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(subtitle_label)
-	
-	# Spacer
-	var spacer1 = Control.new()
-	spacer1.custom_minimum_size = Vector2(0, 50)
-	vbox.add_child(spacer1)
-	
-	# Play button
-	var play_button = Button.new()
-	play_button.text = "PLAY"
-	play_button.custom_minimum_size = Vector2(200, 50)
-	play_button.pressed.connect(_on_title_play_pressed.bind(title_screen))
-	vbox.add_child(play_button)
-	
-	# Settings button
-	var settings_button = Button.new()
-	settings_button.text = "SETTINGS"
-	settings_button.custom_minimum_size = Vector2(200, 50)
-	settings_button.pressed.connect(_on_title_settings_pressed)
-	vbox.add_child(settings_button)
-	
-	# Quit button
-	var quit_button = Button.new()
-	quit_button.text = "QUIT"
-	quit_button.custom_minimum_size = Vector2(200, 50)
-	quit_button.pressed.connect(_on_title_quit_pressed)
-	vbox.add_child(quit_button)
-	
-	# Spacer
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 50)
-	vbox.add_child(spacer2)
-	
-	# Version
-	var version_label = Label.new()
-	version_label.text = "v1.0"
-	version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	version_label.modulate = Color(0.7, 0.7, 0.7, 1)
-	vbox.add_child(version_label)
-	
-	return title_screen
-
-func _on_title_settings_pressed():
-	print("Settings button pressed")
-	show_message("Settings menu coming soon!")
-
-func _on_title_quit_pressed():
-	print("Quit button pressed")
-	get_tree().quit()
-
-func show_message(text: String):
-	# Create a simple popup message
-	var dialog = AcceptDialog.new()
-	dialog.dialog_text = text
-	add_child(dialog)
-	dialog.popup_centered()
-	dialog.confirmed.connect(func(): dialog.queue_free())
 
 func setup_game():
 	print("Setting up game...")
@@ -142,7 +34,10 @@ func setup_game():
 	# Debug: Print all child nodes
 	print("Available child nodes:")
 	for child in get_children():
-		print("  - ", child.name, " (", child.get_class(), ")")
+		if child != null:
+			print("  - ", child.name, " (", child.get_class(), ")")
+		else:
+			print("  - [null child]")
 	
 	# Get node references directly to avoid @onready timing issues
 	if has_node("GameArea"):
@@ -222,6 +117,9 @@ func load_current_level():
 	# Create source and goal based on level data
 	create_level_source_and_goal(current_level)
 	
+	# Now that the goal exists, ensure UI is connected to it
+	call_deferred("_reconnect_ui_to_goal")
+	
 	print("Level loaded successfully: ", current_level.level_name)
 
 func create_level_source_and_goal(level: Level):
@@ -262,6 +160,9 @@ func create_simple_test_level():
 	fluid_goals.append(goal)
 	
 	level_manager.setup_level(fluid_sources, fluid_goals)
+	
+	# Ensure UI is connected to the goal
+	call_deferred("_reconnect_ui_to_goal")
 
 func create_fluid_source() -> FluidSource:
 	var source = FluidSource.new()
@@ -337,8 +238,8 @@ func create_fluid_goal() -> FluidGoal:
 	sprite.texture = texture
 	goal.add_child(sprite)
 	
-	# Connect area signal
-	goal.area_entered.connect(goal._on_area_entered)
+	# FluidGoal now handles its own connections in _ready()
+	# No manual connection needed here
 	
 	return goal
 
@@ -347,21 +248,117 @@ func _on_fluid_spawned(spawn_position: Vector2):
 
 func _on_level_completed():
 	print("Level completed! Well done!")
+	
+	# Stop all marble spawning
+	stop_marble_spawning()
+	
+	# Show completion message
 	show_completion_message()
 
+func stop_marble_spawning():
+	print("Stopping marble spawning and freezing all marbles...")
+	
+	# Stop all fluid sources
+	for source in fluid_sources:
+		if source and is_instance_valid(source):
+			source.set_active(false)
+			print("Stopped fluid source at: ", source.global_position)
+	
+	# Freeze all existing marbles by setting their gravity scale to 0 and stopping velocity
+	var all_marbles = get_tree().get_nodes_in_group("fluid_particles")
+	for marble in all_marbles:
+		if marble and is_instance_valid(marble):
+			marble.gravity_scale = 0.0  # Stop gravity
+			marble.linear_velocity = Vector2.ZERO  # Stop movement
+			marble.angular_velocity = 0.0  # Stop rotation
+			marble.freeze = true  # Completely freeze the marble
+	
+	print("Froze ", all_marbles.size(), " marbles")
+	
+	# Also update the UI button to reflect stopped state
+	var ui_control = ui.get_node_or_null("GameUI")
+	if ui_control:
+		ui_control.is_flow_active = false
+		var start_button = ui_control.get_node_or_null("FlowControl/StartStopButton")
+		if start_button:
+			start_button.text = "START FLOW"
+			start_button.modulate = Color(0.6, 1.0, 0.6, 1.0)  # Green tint
+
 func show_completion_message():
-	# Create a completion dialog
-	var dialog = AcceptDialog.new()
-	dialog.dialog_text = "Level completed! Well done!\n\nClick OK to return to menu."
-	add_child(dialog)
-	dialog.popup_centered()
-	dialog.confirmed.connect(_return_to_menu)
+	# Create a custom popup window with a working button
+	var popup = PopupPanel.new()
+	popup.size = Vector2(400, 200)
+	add_child(popup)
+	
+	# Create content container
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 20)
+	popup.add_child(vbox)
+	
+	# Add margin
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 20)
+	margin.add_theme_constant_override("margin_bottom", 20)
+	vbox.add_child(margin)
+	
+	var content_vbox = VBoxContainer.new()
+	content_vbox.add_theme_constant_override("separation", 15)
+	margin.add_child(content_vbox)
+	
+	# Add title
+	var title = Label.new()
+	title.text = "Level Complete!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	content_vbox.add_child(title)
+	
+	# Add message
+	var message = Label.new()
+	message.text = "Well done! You collected all the marbles!"
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_vbox.add_child(message)
+	
+	# Add button
+	var button = Button.new()
+	button.text = "Good Job!"
+	button.custom_minimum_size = Vector2(150, 40)
+	
+	# Create button container for centering
+	var button_container = HBoxContainer.new()
+	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	button_container.add_child(button)
+	content_vbox.add_child(button_container)
+	
+	# Connect button to return to title screen
+	button.pressed.connect(func(): 
+		print("Good Job button pressed! Returning to title screen...")
+		popup.queue_free()
+		_return_to_menu()
+	)
+	
+	# Show popup
+	popup.popup_centered()
+	print("Custom completion popup created and shown")
+
+# Remove the old function since we're using a lambda now
+# func _on_completion_dialog_confirmed(dialog: Window):
 
 func _return_to_menu():
-	# Hide the game UI before returning to menu
-	if ui:
-		ui.visible = false
+	print("Returning to main menu...")
+	
+	# Use the TitleScreen.tscn file consistently
 	SceneManager.go_to_title()
+
+func _reconnect_ui_to_goal():
+	print("Reconnecting UI to goal...")
+	var ui_control = ui.get_node_or_null("GameUI")
+	if ui_control and ui_control.has_method("_connect_to_fluid_goal"):
+		ui_control._connect_to_fluid_goal()
+		print("UI reconnected to goal")
 
 func setup_ui_connections():
 	print("Setting up UI connections...")
@@ -370,7 +367,12 @@ func setup_ui_connections():
 	# The UI.tscn is now loaded as GameUI under the CanvasLayer
 	var ui_control = ui.get_node_or_null("GameUI")
 	if ui_control:
-		print("Found UI control: ", ui_control.name)
+		if ui_control != null:
+			print("Found UI control: ", ui_control.name)
+		else:
+			print("UI control is null after getting node")
+			return
+			
 		if ui_control.has_method("set_building_system"):
 			# If UI has a method to set building system, use it
 			ui_control.set_building_system(building_system)
