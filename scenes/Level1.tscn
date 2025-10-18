@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://526qnxvpr8m0"]
+[gd_scene load_steps=4 format=3 uid="uid://526qnxvpr8m0"]
 
 [ext_resource type="Script" uid="uid://cb7q02h051yei" path="res://scripts/Level.gd" id="1_level"]
+[ext_resource type="PackedScene" uid="uid://cqm8j5k2n7b8p" path="res://scenes/FluidSource.tscn" id="2_source"]
+[ext_resource type="PackedScene" uid="uid://8e26nt5uva0" path="res://scenes/FluidGoal.tscn" id="3_goal"]
 
 [node name="Level1" type="Node2D"]
 script = ExtResource("1_level")
@@ -13,109 +15,66 @@ goal_position = Vector2(512, 384)
 
 [node name="Platforms" type="Node2D" parent="LevelGeometry"]
 
-[node name="Platform1" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 48.0
-offset_top = 400.0
-offset_right = 80.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform1" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(80, 416)
+metadata/block_type = "solid"
 
-[node name="Platform2" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 80.0
-offset_top = 400.0
-offset_right = 112.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform2" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(112, 416)
+metadata/block_type = "solid"
 
-[node name="Platform3" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 112.0
-offset_top = 400.0
-offset_right = 144.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform3" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(144, 416)
+metadata/block_type = "solid"
 
-[node name="Platform4" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 144.0
-offset_top = 400.0
-offset_right = 176.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform4" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(208, 416)
+metadata/block_type = "solid"
 
-[node name="Platform5" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 208.0
-offset_top = 400.0
-offset_right = 240.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform5" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(240, 416)
+metadata/block_type = "solid"
 
-[node name="Platform6" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 240.0
-offset_top = 400.0
-offset_right = 272.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform6" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(272, 416)
+metadata/block_type = "solid"
 
-[node name="Platform7" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 272.0
-offset_top = 400.0
-offset_right = 304.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform7" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(336, 416)
+metadata/block_type = "solid"
 
-[node name="Platform8" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 336.0
-offset_top = 400.0
-offset_right = 368.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform8" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(368, 416)
+metadata/block_type = "solid"
 
-[node name="Platform9" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 368.0
-offset_top = 400.0
-offset_right = 400.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform9" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(400, 416)
+metadata/block_type = "solid"
 
-[node name="Platform10" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 400.0
-offset_top = 400.0
-offset_right = 432.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform10" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(464, 416)
+metadata/block_type = "solid"
 
-[node name="Platform11" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 464.0
-offset_top = 400.0
-offset_right = 496.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
+[node name="Platform11" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(496, 416)
+metadata/block_type = "solid"
 
-[node name="Platform12" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 496.0
-offset_top = 400.0
-offset_right = 528.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Platform13" type="ColorRect" parent="LevelGeometry/Platforms"]
-offset_left = 528.0
-offset_top = 400.0
-offset_right = 560.0
-offset_bottom = 432.0
-color = Color(0.5, 0.5, 0.5, 1)
-
-[node name="Obstacles" type="Node2D" parent="LevelGeometry"]
+[node name="Platform12" type="Marker2D" parent="LevelGeometry/Platforms"]
+position = Vector2(528, 416)
+metadata/block_type = "solid"
 
 [node name="Ramps" type="Node2D" parent="LevelGeometry"]
 
-[node name="Pipes" type="Node2D" parent="LevelGeometry"]
+[node name="RampExample" type="Marker2D" parent="LevelGeometry/Ramps"]
+position = Vector2(112, 208)
+gizmo_extents = 1000.0
+metadata/block_type = "ramp_right"
 
-[node name="PipeH" type="ColorRect" parent="LevelGeometry/Pipes"]
-offset_left = 272.0
-offset_top = 336.0
-offset_right = 304.0
-offset_bottom = 368.0
-color = Color(0.3, 0.3, 0.3, 1)
+[node name="FluidSource" parent="." instance=ExtResource("2_source")]
+position = Vector2(96, 64)
+
+[node name="FluidGoal" parent="." instance=ExtResource("3_goal")]
+position = Vector2(512, 384)
 
 [node name="Markers" type="Node2D" parent="."]
 
@@ -138,7 +97,7 @@ offset_left = 488.0
 offset_top = 360.0
 offset_right = 536.0
 offset_bottom = 408.0
-color = Color(1, 0.5, 0, 1)
+color = Color(0.840612, 0.551276, 0.738109, 1)
 
 [node name="GoalLabel" type="Label" parent="Markers"]
 offset_left = 496.0

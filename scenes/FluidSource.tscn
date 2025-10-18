@@ -15,6 +15,7 @@ shape = SubResource("RectangleShape2D_1")
 modulate = Color(0.2, 0.6, 1, 1)
 
 [node name="SpawnTimer" type="Timer" parent="."]
+wait_time = 0.25
 autostart = true
 
 [connection signal="timeout" from="SpawnTimer" to="." method="_on_spawn_timer_timeout"]

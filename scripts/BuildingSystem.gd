@@ -13,6 +13,18 @@ var current_drawing_line: Line2D
 var current_drawing_body: StaticBody2D
 var draw_points: PackedVector2Array = []
 var draw_thickness: float = 16.0
+var stroke_segments := {}  # Dictionary: Line2D -> Array[CollisionShape2D]
+
+# Continuous erase state
+var is_erasing: bool = false
+var last_erase_pos: Vector2 = Vector2.INF
+var erase_interval_sec: float = 0.0      # 0 = every frame; set e.g. 0.02 for 50 Hz
+var erase_min_spacing: float = 2.0       # don't erase twice too close to each other
+var _erase_accum: float = 0.0
+
+
+var strokes: Array[Stroke] = []
+var current_stroke: Stroke = null
 
 signal block_placed(position: Vector2, block_type: BuildingBlock.BlockType)
 signal block_removed(position: Vector2)
@@ -21,6 +33,22 @@ func _ready():
 	print("BuildingSystem ready - creating blocks programmatically")
 	# Add to group for easy finding
 	add_to_group("building_system")
+
+
+func _process(delta: float) -> void:
+	if not is_draw_mode:
+		return
+
+	if is_erasing:
+		if erase_interval_sec <= 0.0:
+			# Every frame is fine; spacing guard will protect from over-splitting
+			_perform_erase(get_global_mouse_position())
+		else:
+			_erase_accum += delta
+			while _erase_accum >= erase_interval_sec:
+				_erase_accum -= erase_interval_sec
+				_perform_erase(get_global_mouse_position())
+
 
 func _input(event):
 	if event is InputEventMouseButton:
@@ -47,20 +75,32 @@ func handle_block_input(event: InputEventMouseButton):
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			remove_block(grid_pos)
 
-func handle_draw_input(event: InputEventMouseButton):
+
+
+func handle_draw_input(event: InputEventMouseButton) -> void:
 	if event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			start_drawing(get_global_mouse_position())
 		else:
 			finish_drawing()
-	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-		# Right click to erase drawn lines
-		print("Right-click in draw mode at: ", get_global_mouse_position())
-		erase_drawn_line_at_position(get_global_mouse_position())
 
-func handle_draw_motion(_event: InputEventMouseMotion):
-	if is_drawing and current_drawing_line:
+	elif event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed:
+			is_erasing = true
+			last_erase_pos = Vector2.INF
+			_perform_erase(get_global_mouse_position())
+		else:
+			is_erasing = false
+			last_erase_pos = Vector2.INF
+
+
+func handle_draw_motion(_event: InputEventMouseMotion) -> void:
+	if is_drawing and current_stroke:
 		add_point_to_current_drawing(get_global_mouse_position())
+	# Erase while moving the mouse, if RMB is held
+	if is_erasing:
+		_perform_erase(get_global_mouse_position())
+
 
 func _is_mouse_over_ui(ui_node: Control, mouse_pos: Vector2) -> bool:
 	# Check if mouse is over any UI element
@@ -280,38 +320,26 @@ func set_draw_mode(draw_mode: bool):
 		finish_drawing()
 
 # Drawing mode functions
-func start_drawing(start_pos: Vector2):
+
+func start_drawing(start_pos: Vector2) -> void:
 	print("Starting drawing at: ", start_pos)
 	is_drawing = true
-	draw_points.clear()
-	draw_points.append(start_pos)
-	
-	# Create visual line
-	current_drawing_line = Line2D.new()
-	current_drawing_line.width = draw_thickness
-	current_drawing_line.default_color = Color.BROWN
-	current_drawing_line.joint_mode = Line2D.LINE_JOINT_ROUND
-	current_drawing_line.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	current_drawing_line.end_cap_mode = Line2D.LINE_CAP_ROUND
-	current_drawing_line.add_point(start_pos)
-	add_child(current_drawing_line)
-	
-	# Create physics body for collision
-	current_drawing_body = StaticBody2D.new()
-	add_child(current_drawing_body)
+	current_stroke = Stroke.new()
+	current_stroke.draw_thickness = draw_thickness
+	current_stroke.color = Color.BROWN
+	add_child(current_stroke)
+	strokes.append(current_stroke)
+	current_stroke.add_point(start_pos)
 
-func add_point_to_current_drawing(pos: Vector2):
-	if not is_drawing or not current_drawing_line:
+
+
+func add_point_to_current_drawing(pos: Vector2) -> void:
+	if not current_stroke:
 		return
-	
-	# Only add point if it's far enough from the last point (smooth drawing)
-	var last_point = draw_points[-1]
-	if pos.distance_to(last_point) > 8.0:  # Minimum distance between points
-		draw_points.append(pos)
-		current_drawing_line.add_point(pos)
-		
-		# Add collision segment for the new line segment
-		add_collision_segment(last_point, pos)
+	var pts := current_stroke.points()
+	if pts.size() == 0 or pos.distance_to(pts[pts.size() - 1]) > 8.0:
+		current_stroke.add_point(pos)
+
 
 func add_collision_segment(from: Vector2, to: Vector2):
 	if not current_drawing_body:
@@ -334,85 +362,105 @@ func add_collision_segment(from: Vector2, to: Vector2):
 	
 	current_drawing_body.add_child(collision)
 
-func finish_drawing():
+
+func finish_drawing() -> void:
 	if not is_drawing:
 		return
-	
-	print("Finishing drawing with ", draw_points.size(), " points")
+	print("Finishing drawing with ", current_stroke.points().size(), " points")
 	is_drawing = false
-	
-	# Finalize the drawing
-	if current_drawing_line and draw_points.size() >= 2:
-		# Keep the line and collision body
-		current_drawing_line = null
-		current_drawing_body = null
-	else:
-		# Remove incomplete drawing
-		if current_drawing_line:
-			current_drawing_line.queue_free()
-			current_drawing_line = null
-		if current_drawing_body:
-			current_drawing_body.queue_free()
-			current_drawing_body = null
-	
-	draw_points.clear()
+	current_stroke = null
 
-func erase_drawn_line_at_position(pos: Vector2):
-	print("Looking for drawn lines to erase at position: ", pos)
-	var erase_radius = draw_thickness * 2  # Larger detection radius
-	var lines_to_remove = []
-	var bodies_to_remove = []
-	
-	# Find all Line2D nodes and their corresponding StaticBody2D collision bodies
-	for child in get_children():
-		if child is Line2D:
-			# Check if click is near any point on the line
-			var line_node = child as Line2D
-			var should_remove = false
-			
-			for point in line_node.points:
-				if pos.distance_to(point) < erase_radius:
-					should_remove = true
-					break
-			
-			# Also check if click is near any line segment
-			if not should_remove and line_node.points.size() >= 2:
-				for i in range(line_node.points.size() - 1):
-					var point_a = line_node.points[i]
-					var point_b = line_node.points[i + 1]
-					var closest_point = Geometry2D.get_closest_point_to_segment(pos, point_a, point_b)
-					if pos.distance_to(closest_point) < erase_radius:
-						should_remove = true
-						break
-			
-			if should_remove:
-				lines_to_remove.append(line_node)
-				print("Found line to remove with ", line_node.points.size(), " points")
-	
-	# Find corresponding StaticBody2D collision bodies to remove
-	for child in get_children():
-		if child is StaticBody2D:
-			# Check if this StaticBody2D has collision shapes near the click position
-			var body_node = child as StaticBody2D
-			var should_remove = false
-			
-			for collision_child in body_node.get_children():
-				if collision_child is CollisionShape2D:
-					var collision_pos = body_node.global_position + collision_child.position
-					if pos.distance_to(collision_pos) < erase_radius * 2:  # Larger radius for collision bodies
-						should_remove = true
-						break
-			
-			if should_remove:
-				bodies_to_remove.append(body_node)
-	
-	# Remove all found lines and bodies
-	for line in lines_to_remove:
-		line.queue_free()
-	for body in bodies_to_remove:
-		body.queue_free()
-	
-	if lines_to_remove.size() > 0:
-		print("Erased ", lines_to_remove.size(), " drawn lines and ", bodies_to_remove.size(), " collision bodies at: ", pos)
-	else:
-		print("No drawn lines found near position: ", pos)
+
+func erase_drawn_line_at_position(pos: Vector2) -> void:
+	print("Erasing near: ", pos)
+	var erase_radius := draw_thickness * 2.0
+
+	var best_stroke: Stroke = null
+	var best_idx := -1
+	var best_dist := INF
+
+	for s in strokes:
+		if not is_instance_valid(s):
+			continue
+		var idx := s.get_closest_segment_index(pos, erase_radius)
+		if idx == -1:
+			continue
+		var pts := s.points()
+		var a := pts[idx]
+		var b := pts[idx + 1]
+		var closest := Geometry2D.get_closest_point_to_segment(pos, a, b)
+		var d := pos.distance_to(closest)
+		if d < best_dist:
+			best_dist = d
+			best_stroke = s
+			best_idx = idx
+
+	if best_stroke == null:
+		print("No drawn segment found near position: ", pos)
+		return
+
+	var spawned: Array = best_stroke.erase_segment_at_position(pos, erase_radius)
+
+	# Rebuild strokes list: drop the freed one, keep valid ones, then add spawns
+	var new_list: Array[Stroke] = []
+	for s in strokes:
+		if is_instance_valid(s) and s != best_stroke:
+			new_list.append(s)
+	for ns in spawned:
+		if is_instance_valid(ns):
+			new_list.append(ns)
+	strokes = new_list
+
+	print("Erased one segment. New strokes: ", spawned.size())
+
+
+
+func clear_blocks():
+	print("BuildingSystem: Clearing all blocks and drawn lines")
+
+	# Remove all placed blocks
+	for block in placed_blocks.values():
+		if is_instance_valid(block):
+			block.queue_free()
+	placed_blocks.clear()
+
+	# Remove all strokes
+	for s in strokes:
+		if is_instance_valid(s):
+			s.queue_free()
+	strokes.clear()
+
+
+func _perform_erase(current_pos: Vector2) -> void:
+	# First time or reset: just erase where we are
+	if last_erase_pos == Vector2.INF:
+		_do_single_erase(current_pos)
+		last_erase_pos = current_pos
+		return
+
+	var dist := last_erase_pos.distance_to(current_pos)
+	if dist < erase_min_spacing:
+		# Still honor small movement if called from _process (cursor still)
+		_do_single_erase(current_pos)
+		last_erase_pos = current_pos
+		return
+
+	# Step along the line from last -> current and erase at fixed spacing
+	var step := erase_min_spacing
+	var dir := (current_pos - last_erase_pos).normalized()
+	var walked := 0.0
+	var p := last_erase_pos
+
+	while walked + step <= dist:
+		p += dir * step
+		_do_single_erase(p)
+		walked += step
+
+	# Final pass at the actual current position
+	_do_single_erase(current_pos)
+	last_erase_pos = current_pos
+
+
+func _do_single_erase(pos: Vector2) -> void:
+	# You already have erase_drawn_line_at_position(pos) implemented.
+	erase_drawn_line_at_position(pos)

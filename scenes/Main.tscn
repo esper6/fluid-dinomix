@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://b8j0xqvnhqr5w"]
+[gd_scene load_steps=6 format=3 uid="uid://b8j0xqvnhqr5w"]
 
 [ext_resource type="Script" uid="uid://cry0qxjfhv2ph" path="res://scripts/Main.gd" id="1_0j5xk"]
 [ext_resource type="Script" uid="uid://bmu674iexr7yy" path="res://scripts/FluidSystem.gd" id="3_fluid"]
 [ext_resource type="PackedScene" uid="uid://fac13ns5yvh0" path="res://scenes/UI.tscn" id="4_ui"]
+[ext_resource type="Script" uid="uid://bmj7v5gmc4lev" path="res://scripts/LevelManager.gd" id="4_vcsgt"]
+[ext_resource type="PackedScene" uid="uid://526qnxvpr8m0" path="res://scenes/Level1.tscn" id="5_c01mt"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_0j5xk")
@@ -15,3 +17,8 @@ script = ExtResource("1_0j5xk")
 
 [node name="FluidSystem" type="Node2D" parent="."]
 script = ExtResource("3_fluid")
+
+[node name="LevelManager" type="Node" parent="."]
+script = ExtResource("4_vcsgt")
+levels = Array[PackedScene]([ExtResource("5_c01mt")])
+metadata/_custom_type_script = "uid://bmj7v5gmc4lev"

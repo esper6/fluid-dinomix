@@ -9,6 +9,8 @@ var spawn_timer: Timer
 signal fluid_spawned(position: Vector2)
 
 func _ready():
+	# Add to group for discovery by LevelManager
+	add_to_group("FluidSource")
 	print("FluidSource _ready() called")
 	# Find the spawn timer that was added programmatically
 	spawn_timer = get_node("SpawnTimer")

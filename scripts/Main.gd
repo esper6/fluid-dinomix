@@ -77,6 +77,7 @@ func setup_game():
 	# Initialize building system FIRST
 	print("Creating building system...")
 	building_system = BuildingSystem.new()
+	building_system.name = "BuildingSystem"
 	game_area.add_child(building_system)
 	print("Building system added to GameArea")
 	
@@ -85,18 +86,25 @@ func setup_game():
 		# UI.tscn is now loaded, connect it to building system
 		setup_ui_connections()
 	
-	# Initialize level manager
-	print("Creating level manager...")
-	level_manager = LevelManager.new()
-	add_child(level_manager)
+	# Get level manager (should already exist in scene, or create it)
+	print("Finding level manager...")
+	if has_node("LevelManager"):
+		level_manager = get_node("LevelManager")
+		print("Found existing LevelManager")
+	else:
+		print("Creating new LevelManager...")
+		level_manager = LevelManager.new()
+		add_child(level_manager)
+		# Set NodePaths for systems
+		level_manager.building_system_path = NodePath("GameArea/BuildingSystem")
+		level_manager.fluid_system_path = NodePath("FluidSystem")
+		print("Level manager created")
+	
 	level_manager.level_completed.connect(_on_level_completed)
-	print("Level manager created")
 	
-	# Fluid system script is already attached in the scene
+	# LevelManager now handles level loading automatically via its _ready()
+	# It will discover sources/goals via groups and call setup on the Level
 	
-	# Load and setup the current level
-	print("Loading level...")
-	load_current_level()
 	print("Game setup complete!")
 
 func load_current_level():
@@ -268,10 +276,11 @@ func stop_marble_spawning():
 	var all_marbles = get_tree().get_nodes_in_group("fluid_particles")
 	for marble in all_marbles:
 		if marble and is_instance_valid(marble):
-			marble.gravity_scale = 0.0  # Stop gravity
-			marble.linear_velocity = Vector2.ZERO  # Stop movement
-			marble.angular_velocity = 0.0  # Stop rotation
-			marble.freeze = true  # Completely freeze the marble
+			# Use call_deferred to avoid physics query flush conflicts
+			marble.call_deferred("set", "gravity_scale", 0.0)  # Stop gravity
+			marble.call_deferred("set", "linear_velocity", Vector2.ZERO)  # Stop movement
+			marble.call_deferred("set", "angular_velocity", 0.0)  # Stop rotation
+			marble.call_deferred("set", "freeze", true)  # Completely freeze the marble
 	
 	print("Froze ", all_marbles.size(), " marbles")
 	

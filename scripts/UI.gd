@@ -6,7 +6,7 @@ var current_selected_button: Button
 var fluid_source: FluidSource
 var fluid_goal: FluidGoal
 var is_flow_active: bool = false
-var is_draw_mode: bool = false
+var is_draw_mode: bool = true
 
 func _ready():
 	# Get reference to building system - use call_deferred to ensure Main is ready
@@ -46,6 +46,8 @@ func _connect_to_building_system():
 	call_deferred("_connect_to_fluid_source")
 	call_deferred("_connect_to_fluid_goal")
 	
+	_apply_mode_state()
+	
 	print("UI: Final building_system reference: ", building_system)
 
 func set_building_system(bs: BuildingSystem):
@@ -54,36 +56,36 @@ func set_building_system(bs: BuildingSystem):
 
 func _connect_to_fluid_source():
 	print("UI: Looking for fluid source...")
-	# Try to find the fluid source in the GameArea
-	var game_area = get_node_or_null("/root/Main/GameArea")
-	if game_area:
-		for child in game_area.get_children():
-			if child is FluidSource:
-				fluid_source = child
-				print("UI: Found fluid source: ", fluid_source.name)
-				break
-	
-	if not fluid_source:
-		print("UI: No fluid source found yet")
+	# Use group-based discovery (matches new LevelManager system)
+	var sources = get_tree().get_nodes_in_group("FluidSource")
+	if sources.size() > 0:
+		# Get the first source (typically there's only one per level)
+		fluid_source = sources[0] as FluidSource
+		if fluid_source:
+			print("UI: Found fluid source: ", fluid_source.name)
+		else:
+			print("UI: Node in FluidSource group is not a FluidSource type")
+	else:
+		print("UI: No fluid source found in FluidSource group yet")
 
 func _connect_to_fluid_goal():
 	print("UI: Looking for fluid goal...")
-	# Try to find the fluid goal in the GameArea
-	var game_area = get_node_or_null("/root/Main/GameArea")
-	if game_area:
-		for child in game_area.get_children():
-			if child is FluidGoal:
-				fluid_goal = child
-				print("UI: Found fluid goal: ", fluid_goal.name)
-				# Connect to marble collection signal
-				fluid_goal.marble_collected.connect(_on_marble_collected)
-				fluid_goal.goal_completed.connect(_on_goal_completed)
-				# Initialize counter display
-				update_marble_counter(0, fluid_goal.fluid_required)
-				break
-	
-	if not fluid_goal:
-		print("UI: No fluid goal found yet")
+	# Use group-based discovery (matches new LevelManager system)
+	var goals = get_tree().get_nodes_in_group("FluidGoal")
+	if goals.size() > 0:
+		# Get the first goal (typically there's only one per level)
+		fluid_goal = goals[0] as FluidGoal
+		if fluid_goal:
+			print("UI: Found fluid goal: ", fluid_goal.name)
+			# Connect to marble collection signal
+			fluid_goal.marble_collected.connect(_on_marble_collected)
+			fluid_goal.goal_completed.connect(_on_goal_completed)
+			# Initialize counter display
+			update_marble_counter(0, fluid_goal.fluid_required)
+		else:
+			print("UI: Node in FluidGoal group is not a FluidGoal type")
+	else:
+		print("UI: No fluid goal found in FluidGoal group yet")
 
 func _on_marble_collected(count: int):
 	print("UI: Marble collected, count: ", count)
@@ -166,7 +168,11 @@ func _on_pipe_v_button_pressed():
 		print("UI: No building system found!")
 
 func update_button_selection(selected_button: Button):
-	print("UI: update_button_selection called with button: ", selected_button.name if selected_button else "null")
+	if selected_button == null:
+		print("UI: update_button_selection called with button: null")
+		return
+	print("UI: update_button_selection called with button: ", selected_button.name)
+
 	
 	# Reset all buttons to normal state
 	var all_buttons = [
@@ -250,3 +256,24 @@ func _on_mode_toggle_button_pressed():
 		palette.visible = not is_draw_mode  # Hide block palette in draw mode
 	
 	print("UI: Mode is now ", "DRAW" if is_draw_mode else "BLOCK")
+	
+
+func _apply_mode_state():
+	# Tell the BuildingSystem
+	if building_system:
+		building_system.set_draw_mode(is_draw_mode)
+
+	# Update the Mode button
+	var mode_button = get_node_or_null("FlowControl/ModeToggleButton")
+	if mode_button:
+		if is_draw_mode:
+			mode_button.text = "BLOCK MODE"               # clicking will switch to block mode
+			mode_button.modulate = Color(1.0, 0.8, 0.6)   # orange-ish (your existing color)
+		else:
+			mode_button.text = "DRAW MODE"
+			mode_button.modulate = Color(0.8, 0.8, 1.0)   # blue-ish
+	
+	# Hide/show the block palette
+	var palette = get_node_or_null("BuildingPalette")
+	if palette:
+		palette.visible = not is_draw_mode

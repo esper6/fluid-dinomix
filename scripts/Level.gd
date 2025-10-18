@@ -13,9 +13,6 @@ var building_system: BuildingSystem
 var fluid_system: FluidSystem
 var level_manager: LevelManager
 
-signal level_completed
-signal level_failed
-
 func _ready():
 	print("Level loaded: ", level_name)
 
@@ -32,64 +29,56 @@ func setup_level(bs: BuildingSystem, fs: FluidSystem, lm: LevelManager):
 	print("Level '", level_name, "' geometry converted to building blocks.")
 
 func create_building_blocks_from_nodes():
-	# Get the LevelGeometry node and its children
+	# Get the LevelGeometry node that contains all block markers
 	var level_geometry = get_node_or_null("LevelGeometry")
 	if not level_geometry:
 		print("Warning: No LevelGeometry node found")
 		return
 	
-	# Process platforms (solid blocks)
-	var platforms = level_geometry.get_node_or_null("Platforms")
-	if platforms:
-		for platform in platforms.get_children():
-			if platform is ColorRect:
-				create_block_from_rect(platform, BuildingBlock.BlockType.SOLID)
-	
-	# Process obstacles (solid blocks)
-	var obstacles = level_geometry.get_node_or_null("Obstacles")
-	if obstacles:
-		for obstacle in obstacles.get_children():
-			if obstacle is ColorRect:
-				create_block_from_rect(obstacle, BuildingBlock.BlockType.SOLID)
-	
-	# Process ramps
-	var ramps = level_geometry.get_node_or_null("Ramps")
-	if ramps:
-		for ramp in ramps.get_children():
-			if ramp is ColorRect:
-				var block_type = BuildingBlock.BlockType.RAMP_RIGHT
-				if "Left" in ramp.name:
-					block_type = BuildingBlock.BlockType.RAMP_LEFT
-				create_block_from_rect(ramp, block_type)
-	
-	# Process pipes
-	var pipes = level_geometry.get_node_or_null("Pipes")
-	if pipes:
-		for pipe in pipes.get_children():
-			if pipe is ColorRect:
-				var block_type = BuildingBlock.BlockType.PIPE_HORIZONTAL
-				if "V" in pipe.name or "Vertical" in pipe.name:
-					block_type = BuildingBlock.BlockType.PIPE_VERTICAL
-				create_block_from_rect(pipe, block_type)
+	# Iterate through all children to find block markers
+	process_markers_recursive(level_geometry)
 
-func create_block_from_rect(rect: ColorRect, block_type: BuildingBlock.BlockType):
-	# Calculate center position of the rect
-	var center_pos = Vector2(
-		rect.position.x + rect.size.x / 2,
-		rect.position.y + rect.size.y / 2
-	)
+func process_markers_recursive(node: Node):
+	# Process all children of this node
+	for child in node.get_children():
+		# Check if it's a Marker2D or Node2D with block_type metadata
+		if child is Marker2D or child is Node2D:
+			if child.has_meta("block_type"):
+				var block_type = get_block_type_from_meta(child.get_meta("block_type"))
+				if block_type != -1:
+					create_building_block_at_position(child.global_position, block_type)
+		
+		# Recursively process children
+		process_markers_recursive(child)
+
+func get_block_type_from_meta(meta_value) -> int:
+	# Handle string metadata
+	if meta_value is String:
+		match meta_value.to_lower():
+			"solid": return BuildingBlock.BlockType.SOLID
+			"ramp_right": return BuildingBlock.BlockType.RAMP_RIGHT
+			"ramp_left": return BuildingBlock.BlockType.RAMP_LEFT
+			"pipe_horizontal": return BuildingBlock.BlockType.PIPE_HORIZONTAL
+			"pipe_vertical": return BuildingBlock.BlockType.PIPE_VERTICAL
+	# Handle int metadata
+	elif meta_value is int:
+		return meta_value
 	
-	# Convert to grid position
+	return -1
+
+func create_building_block_at_position(world_pos: Vector2, block_type: int):
+	# Convert world position to grid position
 	var grid_pos = Vector2i(
-		int(center_pos.x / building_system.grid_size),
-		int(center_pos.y / building_system.grid_size)
+		int(world_pos.x / building_system.grid_size),
+		int(world_pos.y / building_system.grid_size)
 	)
 	
-	# Create the building block
+	# Check if block already exists at this position
 	var key = str(grid_pos)
 	if key in building_system.placed_blocks:
 		return  # Already exists
 	
+	# Create the building block
 	var block = building_system.create_building_block(block_type)
 	building_system.add_child(block)
 	block.global_position = building_system.grid_to_world(grid_pos)

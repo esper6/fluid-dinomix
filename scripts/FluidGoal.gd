@@ -9,6 +9,8 @@ signal goal_completed
 signal marble_collected(count: int)  # New signal for UI updates
 
 func _ready():
+	# Add to group for discovery by LevelManager
+	add_to_group("FluidGoal")
 	print("FluidGoal (Bucket) _ready() called")
 	# Connect to body entered for marble detection
 	body_entered.connect(_on_body_entered)
